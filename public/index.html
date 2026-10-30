@@ -3,139 +3,317 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Urja Meter Ops Explorer</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Urja Meter Ops — Grid Telemetry Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <header class="app-header">
-    <div class="header-left">
-      <h1>⚡ Urja Meter Ops Explorer</h1>
-      <span class="badge" id="health-badge">Checking API...</span>
+<body class="theme-dark">
+  <!-- Top Navigation Bar -->
+  <header class="console-nav">
+    <div class="nav-brand">
+      <div class="brand-symbol">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+      </div>
+      <div class="brand-info">
+        <span class="brand-title">Urja Meter Ops</span>
+        <span class="brand-sub">Grid Telemetry & API Console</span>
+      </div>
+      <span class="version-tag">v1.0.0</span>
+      <div class="status-indicator" id="system-status-indicator">
+        <span class="pulse-dot"></span>
+        <span class="status-label" id="system-status-text">Connecting...</span>
+      </div>
     </div>
-    <div class="header-right">
-      <a href="/docs" target="_blank" class="btn btn-secondary">API Docs (Scalar)</a>
-      <a href="/openapi.json" target="_blank" class="btn btn-secondary">OpenAPI JSON</a>
-      <button id="refresh-btn" class="btn btn-primary">Refresh Upstream</button>
+
+    <!-- Live KPI Pill Bar -->
+    <div class="kpi-metrics-strip">
+      <div class="kpi-cell" title="Total Registered Meters">
+        <span class="kpi-title">Meters</span>
+        <span class="kpi-num" id="kpi-total">—</span>
+      </div>
+      <div class="kpi-divider"></div>
+      <div class="kpi-cell is-installed" title="Operational Meters">
+        <span class="kpi-title">Installed</span>
+        <span class="kpi-num" id="kpi-installed">—</span>
+      </div>
+      <div class="kpi-divider"></div>
+      <div class="kpi-cell is-faulty" title="Faulty / Requires Maintenance">
+        <span class="kpi-title">Faulty</span>
+        <span class="kpi-num" id="kpi-faulty">—</span>
+      </div>
+      <div class="kpi-divider"></div>
+      <div class="kpi-cell is-decom" title="Decommissioned Units">
+        <span class="kpi-title">Decommissioned</span>
+        <span class="kpi-num" id="kpi-decom">—</span>
+      </div>
+      <div class="kpi-divider"></div>
+      <div class="kpi-cell" title="Distribution Transformers">
+        <span class="kpi-title">DTs</span>
+        <span class="kpi-num" id="kpi-transformers">—</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="nav-controls">
+      <a href="/docs" target="_blank" class="nav-btn" title="Open Interactive API Docs">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+          <path d="M6 6h10"></path><path d="M6 10h10"></path>
+        </svg>
+        <span>API Docs</span>
+      </a>
+      <a href="/openapi.json" target="_blank" class="nav-btn" title="Open OpenAPI JSON">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"></polyline>
+          <polyline points="8 6 2 12 8 18"></polyline>
+        </svg>
+        <span>OpenAPI</span>
+      </a>
+      <button id="refresh-upstream-btn" class="nav-btn nav-btn-primary" title="Trigger single-flight upstream reload">
+        <svg class="spin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+        </svg>
+        <span>Sync Upstream</span>
+      </button>
     </div>
   </header>
 
-  <div id="data-quality-banner" class="banner hidden">
-    <span class="banner-icon">ℹ️</span>
-    <span id="banner-text">Loading data quality diagnostics...</span>
-    <a href="/data-quality" target="_blank" class="banner-link">View Full Audit Report →</a>
+  <!-- Contextual Diagnostics Notice -->
+  <div class="telemetry-banner" id="telemetry-banner">
+    <div class="banner-content">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span id="banner-message">Quality Assurance Engine: Initializing diagnostics...</span>
+    </div>
+    <div class="banner-actions">
+      <a href="/data-quality" target="_blank" class="banner-action-link">Inspect Raw Audit JSON →</a>
+      <button class="banner-close-btn" id="dismiss-banner-btn" title="Dismiss banner">✕</button>
+    </div>
   </div>
 
-  <section class="stats-bar" id="stats-bar">
-    <div class="stat-card">
-      <div class="stat-label">Total Meters</div>
-      <div class="stat-val" id="stat-total">-</div>
-    </div>
-    <div class="stat-card status-installed">
-      <div class="stat-label">Installed</div>
-      <div class="stat-val" id="stat-installed">-</div>
-    </div>
-    <div class="stat-card status-faulty">
-      <div class="stat-label">Faulty</div>
-      <div class="stat-val" id="stat-faulty">-</div>
-    </div>
-    <div class="stat-card status-decom">
-      <div class="stat-label">Decommissioned</div>
-      <div class="stat-val" id="stat-decom">-</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Transformers (DTs)</div>
-      <div class="stat-val" id="stat-transformers">-</div>
-    </div>
-  </section>
+  <!-- Main Viewport Layout -->
+  <div class="console-body">
+    <!-- Left Panel: Explorer & Network Hierarchy -->
+    <aside class="console-sidebar">
+      <!-- Search & Filters -->
+      <div class="sidebar-section">
+        <div class="section-heading">FILTER & QUERY</div>
+        <div class="search-input-wrap">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="meter-search" placeholder="Filter meter ID or serial..." autocomplete="off" spellcheck="false" />
+          <span class="search-shortcut">/</span>
+        </div>
 
-  <main class="app-layout">
-    <!-- Sidebar: Hierarchy & Filters -->
-    <aside class="sidebar">
-      <div class="filter-box">
-        <h3>Search & Filters</h3>
-        <input type="text" id="search-input" placeholder="Search meter ID / serial..." />
-        
-        <div class="filter-row">
-          <label for="filter-status">Status:</label>
-          <select id="filter-status">
-            <option value="">All Statuses</option>
-            <option value="Installed">Installed</option>
-            <option value="Faulty">Faulty</option>
-            <option value="Decommissioned">Decommissioned</option>
-          </select>
+        <div class="filter-group">
+          <div class="segmented-control" id="status-segmented">
+            <button class="segment-btn active" data-status="">All</button>
+            <button class="segment-btn" data-status="Installed">Installed</button>
+            <button class="segment-btn" data-status="Faulty">Faulty</button>
+            <button class="segment-btn" data-status="Decommissioned">Decom</button>
+          </div>
         </div>
 
         <div class="filter-row">
-          <label for="filter-make">Make:</label>
-          <select id="filter-make">
-            <option value="">All Makes</option>
-            <option value="HPL">HPL</option>
-            <option value="L&T">L&T</option>
-            <option value="Genus">Genus</option>
-            <option value="Allied">Allied</option>
-            <option value="Secure">Secure</option>
-          </select>
+          <label for="make-filter">Make:</label>
+          <div class="select-wrap">
+            <select id="make-filter">
+              <option value="">All Manufacturers</option>
+              <option value="HPL">HPL</option>
+              <option value="L&T">L&T</option>
+              <option value="Genus">Genus</option>
+              <option value="Allied">Allied</option>
+              <option value="Secure">Secure</option>
+            </select>
+          </div>
         </div>
 
-        <div class="active-node-banner hidden" id="active-node-box">
-          <span>Filtering by node: <strong id="active-node-name"></strong></span>
-          <button id="clear-node-btn" title="Clear node filter">✕</button>
+        <div class="filter-row">
+          <label for="phase-filter">Phase:</label>
+          <div class="select-wrap">
+            <select id="phase-filter">
+              <option value="">All Phases</option>
+              <option value="single">Single Phase</option>
+              <option value="three">Three Phase</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Active Filter Badge -->
+        <div class="active-filter-chip hidden" id="active-filter-chip">
+          <span class="chip-label" id="active-filter-label"></span>
+          <button class="chip-clear-btn" id="clear-active-filter-btn" title="Remove filter">✕</button>
         </div>
       </div>
 
-      <div class="hierarchy-tree-box">
-        <h3>Network Hierarchy</h3>
-        <div id="tree-container" class="tree-container">Loading tree...</div>
-      </div>
-    </aside>
-
-    <!-- Map View -->
-    <section class="map-container">
-      <div id="map"></div>
-      <div class="map-legend">
-        <span><i class="dot dot-installed"></i> Installed</span>
-        <span><i class="dot dot-faulty"></i> Faulty</span>
-        <span><i class="dot dot-decom"></i> Decommissioned</span>
-      </div>
-    </section>
-
-    <!-- Meter Detail & Consumption Chart Panel -->
-    <aside class="meter-panel hidden" id="meter-panel">
-      <div class="panel-header">
-        <h2 id="panel-meter-id">Meter Details</h2>
-        <button id="close-panel-btn">✕</button>
-      </div>
-
-      <div class="panel-body">
-        <div class="info-group">
-          <div class="info-row"><span>Serial:</span> <strong id="info-serial">-</strong></div>
-          <div class="info-row"><span>Make & Phase:</span> <strong id="info-make-phase">-</strong></div>
-          <div class="info-row"><span>Status:</span> <strong id="info-status">-</strong></div>
-          <div class="info-row"><span>Type / Build:</span> <strong id="info-type-build">-</strong></div>
-          <div class="info-row"><span>Transformer:</span> <strong id="info-dt">-</strong></div>
+      <!-- Network Hierarchy Tree -->
+      <div class="sidebar-section tree-section">
+        <div class="section-header-row">
+          <span class="section-heading">NETWORK TOPOLOGY</span>
+          <span class="node-depth-hint">Zone → DT</span>
         </div>
-
-        <div class="info-group">
-          <h4>Hierarchy Path</h4>
-          <div class="breadcrumb" id="info-breadcrumb">-</div>
-        </div>
-
-        <div class="info-group" id="issues-group">
-          <h4>Data Quality Notes</h4>
-          <div id="info-issues" class="issues-list">None</div>
-        </div>
-
-        <div class="info-group">
-          <h4>7-Day Interval Consumption</h4>
-          <p class="chart-subtitle">30-min intervals (active kWh and Voltage). Historical window ends 30 Jun 2026.</p>
-          <div id="chart-loading" class="chart-loading hidden">Fetching readings...</div>
-          <div id="chart-container" class="chart-container"></div>
-          <div id="chart-summary" class="chart-summary"></div>
+        <div class="tree-wrapper" id="hierarchy-tree-root">
+          <div class="loading-placeholder">Rendering topology tree...</div>
         </div>
       </div>
     </aside>
-  </main>
+
+    <!-- Center View: Interactive GIS Map -->
+    <main class="console-map-viewport">
+      <div id="gis-map"></div>
+
+      <!-- Floating Map Header Controls -->
+      <div class="map-overlay-badge">
+        <span class="pin-count-indicator" id="visible-meters-count">Plotting smart meters...</span>
+      </div>
+
+      <!-- Map Legend -->
+      <div class="map-gis-legend">
+        <div class="legend-item"><span class="legend-dot status-installed-dot"></span> Installed</div>
+        <div class="legend-item"><span class="legend-dot status-faulty-dot"></span> Faulty</div>
+        <div class="legend-item"><span class="legend-dot status-decom-dot"></span> Decommissioned</div>
+      </div>
+    </main>
+
+    <!-- Right Slide-Over Inspector Drawer -->
+    <aside class="console-inspector hidden" id="meter-inspector">
+      <div class="inspector-header">
+        <div class="inspector-title-wrap">
+          <span class="inspector-tag">METER INSPECTOR</span>
+          <h2 class="inspector-id" id="insp-meter-id">J100000</h2>
+        </div>
+        <div class="inspector-actions">
+          <button class="action-btn" id="copy-meter-id-btn" title="Copy Meter ID">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+          <button class="action-btn" id="close-inspector-btn" title="Close inspector">✕</button>
+        </div>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="inspector-tabs">
+        <button class="tab-btn active" data-tab="tab-telemetry">Telemetry & Load</button>
+        <button class="tab-btn" data-tab="tab-nameplate">Nameplate</button>
+        <button class="tab-btn" data-tab="tab-topology">Network Path</button>
+        <button class="tab-btn" data-tab="tab-audit">Quality Audit</button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="inspector-content">
+        <!-- Tab 1: Telemetry & Load Curve -->
+        <div class="tab-pane active" id="tab-telemetry">
+          <div class="metric-summary-grid">
+            <div class="metric-card">
+              <span class="metric-label">7-Day Consumption</span>
+              <span class="metric-value font-mono" id="m-consumed">—</span>
+              <span class="metric-unit">kWh active</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Avg Voltage (R)</span>
+              <span class="metric-value font-mono" id="m-avg-v">—</span>
+              <span class="metric-unit">Volts RMS</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Voltage Range</span>
+              <span class="metric-value font-mono" id="m-v-range">—</span>
+              <span class="metric-unit">Min / Max</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Intervals Logged</span>
+              <span class="metric-value font-mono" id="m-records">—</span>
+              <span class="metric-unit">30-min steps</span>
+            </div>
+          </div>
+
+          <div class="chart-section">
+            <div class="chart-header">
+              <span class="chart-title">30-MINUTE INTERVAL LOAD PROFILE</span>
+              <span class="chart-sub">Historical recordings end 30/06/2026</span>
+            </div>
+            
+            <div class="chart-svg-wrap" id="load-chart-container">
+              <div class="chart-loader" id="chart-loader">Fetching readings...</div>
+            </div>
+
+            <!-- Chart Hover Readout -->
+            <div class="chart-readout" id="chart-readout">
+              <span id="readout-ts">Hover over chart to inspect interval</span>
+              <span id="readout-val" class="font-mono"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Nameplate -->
+        <div class="tab-pane" id="tab-nameplate">
+          <div class="spec-table">
+            <div class="spec-row">
+              <span class="spec-key">Meter Identifier</span>
+              <span class="spec-val font-mono" id="spec-meter-id">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Serial Number</span>
+              <span class="spec-val font-mono" id="spec-serial">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Manufacturer</span>
+              <span class="spec-val" id="spec-make">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Phase Configuration</span>
+              <span class="spec-val" id="spec-phase">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Install Status</span>
+              <span class="spec-val" id="spec-status">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Metering Type</span>
+              <span class="spec-val" id="spec-install-type">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Hardware Build</span>
+              <span class="spec-val font-mono" id="spec-build">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Distribution Transformer</span>
+              <span class="spec-val font-mono" id="spec-dt-code">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Geographic Coordinates</span>
+              <span class="spec-val font-mono" id="spec-geo">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Topology -->
+        <div class="tab-pane" id="tab-topology">
+          <div class="topology-timeline" id="topology-timeline">
+            <!-- Timeline items rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Tab 4: Quality Audit -->
+        <div class="tab-pane" id="tab-audit">
+          <div id="audit-issues-container" class="audit-container">
+            <!-- Quality issues rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script type="module" src="app.js"></script>

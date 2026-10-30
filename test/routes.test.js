@@ -210,7 +210,7 @@ describe('HTTP Routes via app.inject()', () => {
     const res = await app.inject({ method: 'GET', url: '/' });
     assert.equal(res.statusCode, 200);
     assert.ok(res.headers['content-type'].includes('text/html'));
-    assert.ok(res.body.includes('Urja Meter Ops Explorer'));
+    assert.ok(res.body.includes('Urja Meter Ops'));
   });
 
   it('returns 400 invalid_request on bad query parameters', async () => {
