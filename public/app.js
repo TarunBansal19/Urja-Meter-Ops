@@ -1,4 +1,4 @@
-// Urja Meter Ops — Grid Telemetry Console Application
+// Urja Meter Ops — Minimal Telemetry Console Application
 
 let map;
 let markersLayer;
@@ -8,9 +8,9 @@ let activeStatusFilter = '';
 let currentReadings = [];
 
 const STATUS_COLORS = {
-  Installed: '#10b981',
-  Faulty: '#f59e0b',
-  Decommissioned: '#64748b',
+  Installed: '#22c55e',
+  Faulty: '#eab308',
+  Decommissioned: '#71717a',
 };
 
 async function init() {
@@ -27,7 +27,7 @@ async function init() {
 }
 
 /* ==========================================================================
-   Map Initialization (CartoDB Dark Matter)
+   Map Initialization (OpenStreetMap with Clean Dark Filter, Zero API Key)
    ========================================================================== */
 
 function initMap() {
@@ -37,11 +37,11 @@ function initMap() {
 
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // CartoDB Dark Matter tiles for sleek telemetry styling
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    subdomains: 'abcd',
-    attribution: '© OpenStreetMap contributors, © CARTO',
+  // Standard OpenStreetMap tiles (100% free, reliable, no API key required)
+  // Paired with CSS dark filter in styles.css for a seamless dark-gray UI look
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '© OpenStreetMap contributors',
   }).addTo(map);
 
   markersLayer = L.layerGroup().addTo(map);
@@ -53,7 +53,7 @@ function initMap() {
 
 function setupEventListeners() {
   const searchInput = document.getElementById('meter-search');
-  searchInput.addEventListener('input', debounce(applyFilters, 200));
+  searchInput.addEventListener('input', debounce(applyFilters, 180));
 
   // Keyboard shortcut: '/' focuses search input
   window.addEventListener('keydown', (e) => {
@@ -128,8 +128,8 @@ function setupEventListeners() {
     const id = document.getElementById('insp-meter-id').textContent;
     navigator.clipboard.writeText(id).then(() => {
       const btn = document.getElementById('copy-meter-id-btn');
-      btn.style.color = '#38bdf8';
-      setTimeout(() => { btn.style.color = ''; }, 1000);
+      btn.style.color = '#ffffff';
+      setTimeout(() => { btn.style.color = ''; }, 800);
     });
   });
 }
@@ -143,22 +143,22 @@ async function fetchHealth() {
     const res = await fetch('/health');
     const data = await res.json();
     const statusText = document.getElementById('system-status-text');
-    const pulseDot = document.querySelector('.pulse-dot');
+    const statusDot = document.querySelector('.status-dot');
 
     if (data.status === 'ok') {
       if (data.dataset?.loaded) {
-        statusText.textContent = `Live Telemetry (${data.dataset.meterCount} Units)`;
-        if (pulseDot) pulseDot.style.backgroundColor = '#10b981';
+        statusText.textContent = `Online (${data.dataset.meterCount} units)`;
+        if (statusDot) statusDot.style.backgroundColor = '#22c55e';
       } else {
-        statusText.textContent = 'Ingesting Baseline...';
-        if (pulseDot) pulseDot.style.backgroundColor = '#f59e0b';
+        statusText.textContent = 'Warming...';
+        if (statusDot) statusDot.style.backgroundColor = '#eab308';
       }
     }
   } catch {
     const statusText = document.getElementById('system-status-text');
-    const pulseDot = document.querySelector('.pulse-dot');
-    statusText.textContent = 'API Connection Offline';
-    if (pulseDot) pulseDot.style.backgroundColor = '#ef4444';
+    const statusDot = document.querySelector('.status-dot');
+    statusText.textContent = 'Offline';
+    if (statusDot) statusDot.style.backgroundColor = '#ef4444';
   }
 }
 
@@ -187,7 +187,7 @@ async function fetchDataQuality() {
 
     const filled = data.summary.filledFieldsCount || 0;
     const aliases = data.summary.dtAliasesCount || 0;
-    msg.textContent = `Quality Assurance Engine: Imputed ${filled} missing hierarchy tiers across DT groups; mapped ${aliases} DT name aliases for DT-007. Zero anomalies unresolved.`;
+    msg.textContent = `Audit Engine: Imputed ${filled} missing hierarchy tiers; tracked ${aliases} transformer aliases for DT-007. No unresolved conflicts.`;
   } catch (err) {
     console.error('Failed to load data quality:', err);
   }
@@ -221,13 +221,12 @@ function renderTreeItem(node, isExpandedByDefault = false) {
   row.innerHTML = `
     <div class="tree-label-wrap">
       <span class="tree-toggle-arrow">${hasChildren ? '▶' : '•'}</span>
-      <span class="level-tag">${node.level.toUpperCase()}</span>
+      <span class="level-tag font-mono">${node.level.toUpperCase()}</span>
       <span class="tree-node-title" title="${node.name} (${node.id})">${node.name}</span>
     </div>
     <span class="tree-meter-count font-mono">${node.meterCount}</span>
   `;
 
-  // Toggle expansion on arrow click or select node
   row.addEventListener('click', (e) => {
     e.stopPropagation();
 
@@ -240,7 +239,7 @@ function renderTreeItem(node, isExpandedByDefault = false) {
     row.classList.add('is-active');
 
     activeNodeId = node.id;
-    document.getElementById('active-filter-label').textContent = `Node: ${node.name} (${node.id})`;
+    document.getElementById('active-filter-label').textContent = `${node.name} (${node.id})`;
     document.getElementById('active-filter-chip').classList.remove('hidden');
 
     applyFilters();
@@ -315,7 +314,7 @@ function applyFilters() {
   });
 
   const countBadge = document.getElementById('visible-meters-count');
-  countBadge.innerHTML = `Displaying <strong>${filtered.length}</strong> of <strong>${allMeters.length}</strong> meters`;
+  countBadge.innerHTML = `<strong>${filtered.length}</strong> / <strong>${allMeters.length}</strong> meters`;
 
   plotMarkers(filtered);
 }
@@ -326,25 +325,25 @@ function plotMarkers(meters) {
   for (const m of meters) {
     if (!m.location?.latitude || !m.location?.longitude) continue;
 
-    const color = STATUS_COLORS[m.installStatus] || '#38bdf8';
+    const color = STATUS_COLORS[m.installStatus] || '#d4d4d8';
 
     const circle = L.circleMarker([m.location.latitude, m.location.longitude], {
-      radius: 5,
+      radius: 4.5,
       fillColor: color,
-      color: '#ffffff',
+      color: '#18181b',
       weight: 1.2,
       opacity: 0.9,
       fillOpacity: 0.85,
     });
 
     circle.bindTooltip(`
-      <div style="font-family: var(--font-mono); font-weight:600; color:#f8fafc;">${m.meterId}</div>
-      <div style="color:#94a3b8; font-size:11px;">${m.make} • ${m.phaseType} • ${m.installStatus}</div>
-      <div style="color:#38bdf8; font-size:10px;">${m.dtCode} (${m.hierarchy?.dt?.name || 'DT'})</div>
+      <div style="font-family: var(--font-mono); font-weight:600; color:#f4f4f5;">${m.meterId}</div>
+      <div style="color:#a1a1aa; font-size:11px;">${m.make} • ${m.phaseType} • ${m.installStatus}</div>
+      <div style="color:#71717a; font-size:10px;">${m.dtCode}</div>
     `, {
       className: 'gis-tooltip',
       direction: 'top',
-      offset: [0, -6],
+      offset: [0, -5],
     });
 
     circle.on('click', () => openInspector(m));
@@ -362,11 +361,11 @@ async function openInspector(meter) {
 
   document.getElementById('insp-meter-id').textContent = meter.meterId;
 
-  // Nameplate Tab Population
+  // Nameplate Tab
   document.getElementById('spec-meter-id').textContent = meter.meterId;
   document.getElementById('spec-serial').textContent = meter.serialNo;
   document.getElementById('spec-make').textContent = meter.make;
-  document.getElementById('spec-phase').textContent = `${meter.phaseType === 'single' ? 'Single Phase (1φ)' : 'Three Phase (3φ)'}`;
+  document.getElementById('spec-phase').textContent = meter.phaseType === 'single' ? 'Single Phase (1φ)' : 'Three Phase (3φ)';
   document.getElementById('spec-status').textContent = meter.installStatus;
   document.getElementById('spec-install-type').textContent = meter.installType;
   document.getElementById('spec-build').textContent = meter.build;
@@ -378,10 +377,10 @@ async function openInspector(meter) {
     document.getElementById('spec-geo').textContent = 'Not specified';
   }
 
-  // Topology Timeline Population
+  // Topology Timeline
   renderTopologyTimeline(meter);
 
-  // Quality Audit Tab Population
+  // Quality Audit Tab
   renderAuditTab(meter);
 
   // Load Consumption & Chart
@@ -399,7 +398,7 @@ function renderTopologyTimeline(meter) {
     { key: 'subdivision', label: 'Subdivision' },
     { key: 'substation', label: 'Substation' },
     { key: 'feeder', label: 'Feeder' },
-    { key: 'dt', label: 'Transformer (DT)' },
+    { key: 'dt', label: 'DT' },
   ];
 
   tiers.forEach((t) => {
@@ -412,8 +411,8 @@ function renderTopologyTimeline(meter) {
       <div class="timeline-details">
         <span class="timeline-tier">${t.label}</span>
         <span class="timeline-name">${data.name || 'Unknown'}</span>
-        <span class="timeline-code">${data.code || '—'}</span>
-        ${data.inferred ? '<span class="timeline-inferred">Imputed from peer DT group</span>' : ''}
+        <span class="timeline-code font-mono">${data.code || '—'}</span>
+        ${data.inferred ? '<span class="timeline-inferred font-mono">Imputed from peer DT group</span>' : ''}
       </div>
     `;
 
@@ -430,8 +429,8 @@ function renderAuditTab(meter) {
   if (issues.length === 0) {
     container.innerHTML = `
       <div class="audit-card is-clean">
-        <div style="font-weight:600; margin-bottom:2px;">✓ Verified Record</div>
-        <div class="audit-desc">This meter passed all structural consistency, hierarchy integrity, and serial number uniqueness verifications.</div>
+        <div style="font-weight:500; margin-bottom:2px;">✓ Verified Record</div>
+        <div class="audit-desc">Passed all structural consistency, hierarchy integrity, and serial number uniqueness verifications.</div>
       </div>
     `;
     return;
@@ -443,7 +442,7 @@ function renderAuditTab(meter) {
     card.innerHTML = `
       <div class="audit-code">${issue.code}</div>
       <div class="audit-desc">${issue.message || `Hierarchy tier "${issue.field}" was missing upstream.`}</div>
-      <div class="audit-details">Imputed value: "${issue.value}" (source: ${issue.source || 'canonical'})</div>
+      <div class="audit-details">Imputed: "${issue.value}" (source: ${issue.source || 'canonical'})</div>
     `;
     container.appendChild(card);
   });
@@ -453,7 +452,7 @@ async function loadAndRenderConsumption(meterId) {
   const loader = document.getElementById('chart-loader');
   const chartContainer = document.getElementById('load-chart-container');
   loader.style.display = 'flex';
-  loader.textContent = 'Ingesting 30-min load curve...';
+  loader.textContent = 'Loading interval series...';
 
   document.getElementById('m-consumed').textContent = '—';
   document.getElementById('m-avg-v').textContent = '—';
@@ -489,12 +488,12 @@ function renderLoadProfileSvg(container, readings) {
   const values = readings.map((r) => r.kwhDelta ?? 0);
   const maxVal = Math.max(...values, 0.2);
 
-  const width = container.clientWidth || 380;
-  const height = 150;
-  const padL = 28;
-  const padR = 12;
-  const padT = 16;
-  const padB = 24;
+  const width = container.clientWidth || 370;
+  const height = 135;
+  const padL = 26;
+  const padR = 10;
+  const padT = 14;
+  const padB = 22;
 
   const chartW = width - padL - padR;
   const chartH = height - padT - padB;
@@ -512,31 +511,31 @@ function renderLoadProfileSvg(container, readings) {
     <svg id="load-svg" width="100%" height="${height}" viewBox="0 0 ${width} ${height}" style="overflow:visible; cursor:crosshair;">
       <defs>
         <linearGradient id="loadGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
         </linearGradient>
       </defs>
 
       <!-- Background Grid -->
-      <line x1="${padL}" y1="${padT}" x2="${padL + chartW}" y2="${padT}" stroke="#1e293b" stroke-width="1" stroke-dasharray="2,2"/>
-      <line x1="${padL}" y1="${padT + chartH / 2}" x2="${padL + chartW}" y2="${padT + chartH / 2}" stroke="#1e293b" stroke-width="1" stroke-dasharray="2,2"/>
-      <line x1="${padL}" y1="${padT + chartH}" x2="${padL + chartW}" y2="${padT + chartH}" stroke="#334155" stroke-width="1"/>
+      <line x1="${padL}" y1="${padT}" x2="${padL + chartW}" y2="${padT}" stroke="#27272a" stroke-width="1" stroke-dasharray="2,2"/>
+      <line x1="${padL}" y1="${padT + chartH / 2}" x2="${padL + chartW}" y2="${padT + chartH / 2}" stroke="#27272a" stroke-width="1" stroke-dasharray="2,2"/>
+      <line x1="${padL}" y1="${padT + chartH}" x2="${padL + chartW}" y2="${padT + chartH}" stroke="#3f3f46" stroke-width="1"/>
 
       <!-- Y Axis Label -->
-      <text x="${padL - 4}" y="${padT + 4}" fill="#64748b" font-size="9" text-anchor="end" font-family="var(--font-mono)">${maxVal.toFixed(1)}</text>
-      <text x="${padL - 4}" y="${padT + chartH}" fill="#64748b" font-size="9" text-anchor="end" font-family="var(--font-mono)">0.0</text>
+      <text x="${padL - 4}" y="${padT + 4}" fill="#71717a" font-size="8.5" text-anchor="end" font-family="var(--font-mono)">${maxVal.toFixed(1)}</text>
+      <text x="${padL - 4}" y="${padT + chartH}" fill="#71717a" font-size="8.5" text-anchor="end" font-family="var(--font-mono)">0.0</text>
 
       <!-- X Axis Labels -->
-      <text x="${padL}" y="${height - 6}" fill="#64748b" font-size="9" font-family="var(--font-mono)">${readings[0].timestamp.slice(5, 10)}</text>
-      <text x="${padL + chartW}" y="${height - 6}" fill="#64748b" font-size="9" text-anchor="end" font-family="var(--font-mono)">${readings[readings.length - 1].timestamp.slice(5, 10)}</text>
+      <text x="${padL}" y="${height - 5}" fill="#71717a" font-size="8.5" font-family="var(--font-mono)">${readings[0].timestamp.slice(5, 10)}</text>
+      <text x="${padL + chartW}" y="${height - 5}" fill="#71717a" font-size="8.5" text-anchor="end" font-family="var(--font-mono)">${readings[readings.length - 1].timestamp.slice(5, 10)}</text>
 
       <!-- Area and Line Paths -->
       <path d="${areaD}" fill="url(#loadGradient)"/>
-      <path d="${lineD}" fill="none" stroke="#38bdf8" stroke-width="1.8"/>
+      <path d="${lineD}" fill="none" stroke="#d4d4d8" stroke-width="1.5"/>
 
-      <!-- Interactive Crosshair (hidden by default) -->
-      <line id="crosshair-x" x1="0" y1="${padT}" x2="0" y2="${padT + chartH}" stroke="#f8fafc" stroke-width="1" stroke-dasharray="2,2" opacity="0"/>
-      <circle id="crosshair-dot" cx="0" cy="0" r="4" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5" opacity="0"/>
+      <!-- Interactive Crosshair -->
+      <line id="crosshair-x" x1="0" y1="${padT}" x2="0" y2="${padT + chartH}" stroke="#f4f4f5" stroke-width="1" stroke-dasharray="2,2" opacity="0"/>
+      <circle id="crosshair-dot" cx="0" cy="0" r="3.5" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" opacity="0"/>
     </svg>
   `;
 
@@ -557,14 +556,13 @@ function renderLoadProfileSvg(container, readings) {
       return;
     }
 
-    // Find nearest point
     const ratio = (mouseX - padL) / chartW;
     const idx = Math.min(points.length - 1, Math.max(0, Math.round(ratio * (points.length - 1))));
     const p = points[idx];
 
     chX.setAttribute('x1', p.x);
     chX.setAttribute('x2', p.x);
-    chX.setAttribute('opacity', '0.7');
+    chX.setAttribute('opacity', '0.6');
 
     chDot.setAttribute('cx', p.x);
     chDot.setAttribute('cy', p.y);
