@@ -42,7 +42,24 @@ async function main() {
     console.log('   ✓ DT count matches expected baseline (40 DTs).');
   }
 
-  console.log('5. Fetching sample energy readings for meter J100000...');
+  console.log('5. Running normalization and data quality diagnostics...');
+  const { normalizeExportRow } = await import('../src/domain/meters.js');
+  const { buildHierarchy } = await import('../src/domain/hierarchy.js');
+  const normalizedMeters = meters.map(normalizeExportRow);
+  const { report, transformers } = buildHierarchy(normalizedMeters, dts);
+
+  console.log(`   ✓ Cleaned and filled ${report.summary.filledFieldsCount} missing hierarchy fields.`);
+  if (report.summary.filledFieldsCount !== 22) {
+    console.warn(`   ⚠ Warning: expected 22 filled fields, got ${report.summary.filledFieldsCount}`);
+  }
+
+  console.log(`   ✓ Identified ${report.summary.dtAliasesCount} DT name alias instances across meters.`);
+  const dt7 = transformers.find((t) => t.code === 'DT-007');
+  if (dt7 && dt7.aliases.length > 0) {
+    console.log(`   ✓ DT-007 canonical name: "${dt7.name}", aliases: ${JSON.stringify(dt7.aliases)}`);
+  }
+
+  console.log('6. Fetching sample energy readings for meter J100000...');
   const energy = await api.fetchEnergy('J100000');
   console.log(`   ✓ Returned ${energy.length} readings for J100000.`);
   if (energy.length > 0) {
