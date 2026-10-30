@@ -57,8 +57,17 @@ async function start() {
       `Urja Meter Ops API running at http://${config.host}:${config.port} (Interactive docs: http://${config.host}:${config.port}/docs)`
     );
   } catch (err) {
-    app.log.error(err);
-    process.exit(1);
+    if (err.code === 'EADDRINUSE') {
+      const fallbackPort = config.port + 1;
+      app.log.warn(`Port ${config.port} is in use. Falling back to port ${fallbackPort}...`);
+      await app.listen({ port: fallbackPort, host: config.host });
+      app.log.info(
+        `Urja Meter Ops API running at http://${config.host}:${fallbackPort} (Interactive docs: http://${config.host}:${fallbackPort}/docs)`
+      );
+    } else {
+      app.log.error(err);
+      process.exit(1);
+    }
   }
 }
 
