@@ -15,12 +15,12 @@ I built this service to bridge the gap between field operations and programmatic
 ```mermaid
 flowchart LR
     Consumer["API Consumers / Web UI"] -->|HTTP REST| Fastify["Fastify 5 API Server"]
-    Fastify -->|Input Validation & Schemas| Routes["Route Layer (/meters, /hierarchy, etc.)"]
+    Fastify -->|Input Validation & Schemas| Routes["Route Layer: meters, hierarchy, etc."]
     Routes -->|Query / Slices| Store["In-Memory Dataset & Readings Cache"]
     Store -->|Cache Miss / TTL Expiry| Domain["Domain Cleaning & Tree Imputation"]
     Domain -->|Bulk Export & DT Fetch| PortalApi["Portal API Client"]
     PortalApi -->|HMAC-SHA256 Signing + Skew Correction| Signing["HMAC Signer"]
-    PortalApi -->|Session Jar + Concurrency Cap (4)| PortalClient["Portal HTTP Client"]
+    PortalApi -->|Session Jar + Max 4 Concurrency| PortalClient["Portal HTTP Client"]
     PortalClient -->|HTTPS + Auto-Relogin| LegacyPortal["Legacy Urja Ops Portal"]
 ```
 
