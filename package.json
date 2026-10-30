@@ -1,0 +1,24 @@
+{
+  "name": "urja-meter-ops-api",
+  "version": "1.0.0",
+  "description": "Clean, documented REST API service over the Urja Meter Ops legacy portal",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test test/*.test.js test/**/*.test.js",
+    "openapi": "node scripts/generate-openapi.js",
+    "smoke": "node scripts/smoke.js",
+    "probe": "node scripts/probe.js",
+    "verify-export": "node scripts/verify-export.js"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^9.4.2",
+    "@scalar/fastify-api-reference": "^1.25.106",
+    "fastify": "^5.2.1"
+  }
+}
