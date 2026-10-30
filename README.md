@@ -29,10 +29,12 @@ flowchart LR
 ## 2. Quick start
 
 ### Prerequisites
+
 - Node.js >= 20.12 (developed and tested on Node 22 / 24)
 - npm >= 10
 
 ### Setup & Launch
+
 ```bash
 # 1. Clone repository and install dependencies
 npm install
@@ -50,12 +52,15 @@ npm run smoke
 # 5. Start the API server
 npm start
 ```
+
 The service will start on `http://127.0.0.1:3000`. Interactive API documentation is available at [http://127.0.0.1:3000/docs](http://127.0.0.1:3000/docs).
 
 ### Deployment Options
 
 #### Option A: Docker Container (Recommended)
+
 A production multi-stage `Dockerfile` is included in the root directory:
+
 ```bash
 # 1. Build the Docker container image
 docker build -t urja-meter-ops .
@@ -69,6 +74,7 @@ docker run -d \
 ```
 
 #### Option B: Cloud PaaS (Render, Railway, Fly.io, or GCP Cloud Run)
+
 1. Fork or push this repository to GitHub.
 2. In your cloud provider dashboard, create a new Web Service and link the repository.
 3. Configure environment variables in the provider dashboard:
@@ -79,6 +85,7 @@ docker run -d \
 4. The service will build, run `npm start` (or build the `Dockerfile`), and provide a live public HTTPS URL with both the API and interactive web console.
 
 #### Option C: Linux Server / VPS (PM2 Daemon)
+
 ```bash
 # 1. Install production dependencies
 npm ci --omit=dev
@@ -95,9 +102,11 @@ pm2 startup
 ## 3. Sample requests
 
 ### 1. List meters with filters (make, status, pagination)
+
 ```bash
 curl "http://127.0.0.1:3000/meters?make=HPL,L%26T&installStatus=Faulty&pageSize=2"
 ```
+
 ```json
 {
   "data": [
@@ -116,14 +125,20 @@ curl "http://127.0.0.1:3000/meters?make=HPL,L%26T&installStatus=Faulty&pageSize=
     }
   ],
   "pagination": { "page": 1, "pageSize": 2, "total": 38, "totalPages": 19 },
-  "meta": { "fetchedAt": "2026-10-30T04:30:00.000Z", "ageMs": 1240, "stale": false }
+  "meta": {
+    "fetchedAt": "2026-10-30T04:30:00.000Z",
+    "ageMs": 1240,
+    "stale": false
+  }
 }
 ```
 
 ### 2. Get single meter details
+
 ```bash
 curl "http://127.0.0.1:3000/meters/J100000"
 ```
+
 ```json
 {
   "data": {
@@ -140,10 +155,22 @@ curl "http://127.0.0.1:3000/meters/J100000"
       "zone": { "code": "Z-01", "name": "Jaipur Zone 1", "inferred": false },
       "circle": { "code": "C-01", "name": "Circle 1", "inferred": false },
       "division": { "code": "D-01", "name": "Division 1", "inferred": false },
-      "subdivision": { "code": "SD-01", "name": "Subdivision 1", "inferred": false },
-      "substation": { "code": "SS-01", "name": "Substation 1", "inferred": false },
+      "subdivision": {
+        "code": "SD-01",
+        "name": "Subdivision 1",
+        "inferred": false
+      },
+      "substation": {
+        "code": "SS-01",
+        "name": "Substation 1",
+        "inferred": false
+      },
       "feeder": { "code": "F-001", "name": "Feeder 1", "inferred": false },
-      "dt": { "code": "DT-001", "name": "Malviya Nagar DT 1", "inferred": false }
+      "dt": {
+        "code": "DT-001",
+        "name": "Malviya Nagar DT 1",
+        "inferred": false
+      }
     },
     "hierarchyNodeId": "Z-01:C-01:D-01:SD-01:SS-01:F-001:DT-001",
     "dataQuality": { "issues": [] }
@@ -153,9 +180,11 @@ curl "http://127.0.0.1:3000/meters/J100000"
 ```
 
 ### 3. Query 30-minute interval consumption with time filtering
+
 ```bash
 curl "http://127.0.0.1:3000/meters/J100000/consumption?from=2026-06-30&to=2026-07-01"
 ```
+
 ```json
 {
   "data": {
@@ -165,11 +194,11 @@ curl "http://127.0.0.1:3000/meters/J100000/consumption?from=2026-06-30&to=2026-0
     "readings": [
       {
         "timestamp": "2026-06-30T00:30:00+05:30",
-        "kwh": 48560.10,
-        "kvah": 52445.20,
+        "kwh": 48560.1,
+        "kvah": 52445.2,
         "voltageR": 224,
         "kwhDelta": 0.45,
-        "kvahDelta": 0.50
+        "kvahDelta": 0.5
       }
     ],
     "summary": {
@@ -196,11 +225,13 @@ curl "http://127.0.0.1:3000/meters/J100000/consumption?from=2026-06-30&to=2026-0
 ```
 
 ### 4. Geospatial proximity search ("near")
+
 ```bash
 curl "http://127.0.0.1:3000/meters?near=26.9389,75.8309&radiusKm=2"
 ```
 
 ### 5. Network distribution tree (with depth truncation)
+
 ```bash
 curl "http://127.0.0.1:3000/hierarchy?depth=2"
 ```
@@ -213,8 +244,6 @@ curl "http://127.0.0.1:3000/hierarchy?depth=2"
 - [openapi.json](openapi.json) — Full OpenAPI 3.1 specification committed to the repository.
 - **Interactive Documentation** — Hosted live at `/docs` (via Scalar UI).
 - [REFLECTION.md](REFLECTION.md) — Answers to the five retrospective questions from the brief.
-- [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) — 1-page technical discussion guide and cheat-sheet.
-- [docs/investigation-log.md](docs/investigation-log.md) — Full raw investigation notes from initial discovery.
 
 ---
 
@@ -224,11 +253,9 @@ curl "http://127.0.0.1:3000/hierarchy?depth=2"
 .
 ├── openapi.json             # Generated, committed OpenAPI 3.1 specification
 ├── PROTOCOL.md              # Reverse-engineered wire protocol reference
-├── REFLECTION.md            # Retrospective answers (with human markers)
+├── REFLECTION.md            # Retrospective answers to assignment questions
 ├── README.md                # Front door & service documentation
-├── docs/
-│   ├── investigation-log.md # Raw upstream investigation notes
-│   └── WALKTHROUGH.md       # Technical discussion guide
+├── Dockerfile               # Multi-stage production container build
 ├── src/
 │   ├── server.js            # Entry point: loads config, starts server, handles shutdown
 │   ├── app.js               # Fastify app builder with dependency injection
@@ -278,16 +305,16 @@ curl "http://127.0.0.1:3000/hierarchy?depth=2"
 
 ## 7. Design decisions & trade-offs
 
-| Decision | Chosen Solution | Alternative Considered | Rationale |
-|---|---|---|---|
-| **Web Framework** | Fastify 5 | Express / Koa | Route JSON-schemas provide input validation, high-speed serialization, and auto-generated OpenAPI 3.1 documentation from a single source of truth. |
-| **API Client** | Built-in `fetch` (undici) | Axios / Got | Zero dependencies; natively handles `getSetCookie()`, timeouts via `AbortSignal`, and form-encoded payloads. |
-| **Test Runner** | Node.js native `node:test` + `node:assert` | Jest / Vitest | Zero dependencies; instant startup; native ESM support without babel or bundling overhead. |
-| **Primary Ingestion** | HMAC Signed Bulk Export (`/portal/export`) | Scraping 21 search pages + 403 per-meter calls | Reduces cold start from ~1,230 HTTP requests to 2 HTTP requests (~230 KB total payload vs several megabytes). |
-| **Readings Strategy** | On-demand per meter with LRU cache | Prefetching all 403 readings | Prefetching would require 403 requests (11 MB payload) on boot. Most users inspect a small subset of meters. |
-| **Hierarchy Keys** | Colon-delimited path (`Z-01:C-01:...:DT-001`) | Single code (e.g. `DT-001`) | Upstream reuses codes (e.g. `F-001` or `D-01`) under distinct parents. Path IDs prevent key collision. |
-| **Storage Architecture** | In-memory indexing | SQLite / PostgreSQL | 403 meters is tiny (~1 MB in RAM). In-memory Maps give sub-millisecond query latency with zero deployment prerequisites. |
-| **API Authentication** | None (binds `127.0.0.1`) | Bearer token / API keys | Appropriate for a local take-home assessment; leaves endpoints immediately testable by the reviewer. |
+| Decision                 | Chosen Solution                               | Alternative Considered                         | Rationale                                                                                                                                          |
+| ------------------------ | --------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Web Framework**        | Fastify 5                                     | Express / Koa                                  | Route JSON-schemas provide input validation, high-speed serialization, and auto-generated OpenAPI 3.1 documentation from a single source of truth. |
+| **API Client**           | Built-in `fetch` (undici)                     | Axios / Got                                    | Zero dependencies; natively handles `getSetCookie()`, timeouts via `AbortSignal`, and form-encoded payloads.                                       |
+| **Test Runner**          | Node.js native `node:test` + `node:assert`    | Jest / Vitest                                  | Zero dependencies; instant startup; native ESM support without babel or bundling overhead.                                                         |
+| **Primary Ingestion**    | HMAC Signed Bulk Export (`/portal/export`)    | Scraping 21 search pages + 403 per-meter calls | Reduces cold start from ~1,230 HTTP requests to 2 HTTP requests (~230 KB total payload vs several megabytes).                                      |
+| **Readings Strategy**    | On-demand per meter with LRU cache            | Prefetching all 403 readings                   | Prefetching would require 403 requests (11 MB payload) on boot. Most users inspect a small subset of meters.                                       |
+| **Hierarchy Keys**       | Colon-delimited path (`Z-01:C-01:...:DT-001`) | Single code (e.g. `DT-001`)                    | Upstream reuses codes (e.g. `F-001` or `D-01`) under distinct parents. Path IDs prevent key collision.                                             |
+| **Storage Architecture** | In-memory indexing                            | SQLite / PostgreSQL                            | 403 meters is tiny (~1 MB in RAM). In-memory Maps give sub-millisecond query latency with zero deployment prerequisites.                           |
+| **API Authentication**   | None (binds `127.0.0.1`)                      | Bearer token / API keys                        | Appropriate for a local take-home assessment; leaves endpoints immediately testable by the reviewer.                                               |
 
 ---
 
@@ -333,7 +360,7 @@ My service adheres to a strict, reversible data cleaning contract:
 1. **Electrical Network Hierarchy (`/hierarchy`):** Constructs the full multi-tier topological tree from Zone down to DT with aggregated meter counts, transformer ratings, and depth truncation.
 2. **Local Query Layer (`/meters`):** Substring text search (`q`), multi-value comma-separated parameter filters (`make`, `installStatus`, `phaseType`, etc.), hierarchy path prefix matching (`node`), and data quality filtering (`hasIssues`).
 3. **Geospatial Proximity Search (`near`):** Uses Haversine spherical distance calculation to filter and sort meters by radial distance in kilometers.
-   *Scale note:* Linear scan is optimal at 403 meters (< 1ms). For datasets exceeding 50,000 meters, an R-tree or spatial grid index (e.g. SQLite SpatiaLite or PostgreSQL/PostGIS) should be introduced.
+   _Scale note:_ Linear scan is optimal at 403 meters (< 1ms). For datasets exceeding 50,000 meters, an R-tree or spatial grid index (e.g. SQLite SpatiaLite or PostgreSQL/PostGIS) should be introduced.
 4. **Interval Consumption & Delta Engine (`/consumption`):** Transforms raw cumulative counter registers into actual 30-minute interval usage (`kwhDelta`/`kvahDelta`), detecting gaps and counter drops.
 5. **Data Quality Audit Engine (`/data-quality`):** Complete diagnostics and transparency into all imputed fields, alias names, and anomalies.
 
@@ -375,9 +402,3 @@ For detailed answers to the assignment reflection questions (assumptions, diffic
   Ensure `PORTAL_EMAIL` and `PORTAL_PASSWORD` in `.env` match assignment credentials. The service redacts credentials from logs.
 - **Portal Outage:**
   If the portal is down on boot, `/health` will report `loaded: false`. Once loaded, the API serves stale data gracefully. Run `npm run smoke` to test portal connectivity.
-
----
-
-## 16. AI-assistance note
-
-I used an LLM assistant as a pair-programming partner—primarily for generating boilerplate JSON schemas, sanity checking regular expressions for day-first timestamp parsing, and testing edge cases in Fastify error handlers. The core investigation of the legacy system (inspecting compiled SvelteKit chunks, finding `/portal/export`, deobfuscating the HMAC-SHA256 signature algorithm, estimating clock skew from HTTP headers, designing the path-based hierarchy model, and writing the verification scripts) was my own work and design.
