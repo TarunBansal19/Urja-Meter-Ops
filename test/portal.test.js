@@ -26,7 +26,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
   it('logs in successfully and captures session cookie verbatim', async () => {
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
     });
 
@@ -40,7 +40,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
   it('throws PortalAuthError when login returns type: failure', async () => {
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'wrong-password',
     });
 
@@ -53,7 +53,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
   it('replays cookie including %2F in subsequent requests', async () => {
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
     });
 
@@ -71,7 +71,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
   it('automatically relogins once when session expires mid-run', async () => {
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
     });
 
@@ -93,7 +93,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
   it('shares single login promise during concurrent unauthenticated requests', async () => {
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
     });
 
@@ -121,7 +121,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
 
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
     });
 
@@ -135,7 +135,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
 
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
       timeoutMs: 50,
     });
@@ -149,7 +149,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
   it('verifies export signature and fetches export data', async () => {
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
     });
 
@@ -172,7 +172,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
 
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
     });
 
@@ -189,7 +189,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
   it('encodes special characters like & properly in search queries', async () => {
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
     });
 
@@ -204,7 +204,7 @@ describe('PortalClient and PortalApi with FakePortal', () => {
   it('throws NotFoundError when meter is not found for energy or geo', async () => {
     const client = new PortalClient({
       baseUrl,
-      email: 'operator@urja.local',
+      email: 'test@example.com',
       password: 'correct-password',
     });
 
