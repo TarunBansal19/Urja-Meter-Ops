@@ -39,8 +39,8 @@ export class PortalClient {
    * @param {number} [options.timeoutMs=15000]
    * @param {number} [options.maxConcurrency=4]
    */
-  constructor({ baseUrl, email, password, timeoutMs = 15000, maxConcurrency = 4 }) {
-    this.baseUrl = baseUrl.replace(/\/+$/, '');
+  constructor({ baseUrl = 'https://urja-ops.flockenergy.tech', email = '', password = '', timeoutMs = 15000, maxConcurrency = 4 } = {}) {
+    this.baseUrl = (baseUrl || 'https://urja-ops.flockenergy.tech').replace(/\/+$/, '');
     this.email = email;
     this.password = password;
     this.timeoutMs = timeoutMs;
