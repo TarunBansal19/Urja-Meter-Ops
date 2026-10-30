@@ -1,6 +1,12 @@
 import Fastify from 'fastify';
 import fastifySwagger from '@fastify/swagger';
 import fastifyScalar from '@scalar/fastify-api-reference';
+import fastifyStatic from '@fastify/static';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const publicDir = path.resolve(__dirname, '../public');
 
 import { allSchemas } from './schemas/index.js';
 import { metersRoutes } from './routes/meters.js';
@@ -153,6 +159,12 @@ export async function buildApp(deps = {}) {
         message: error.message || 'An unexpected error occurred',
       },
     });
+  });
+
+  // Register static file serving for web client (Phase 8)
+  await app.register(fastifyStatic, {
+    root: publicDir,
+    prefix: '/',
   });
 
   // Register all routes

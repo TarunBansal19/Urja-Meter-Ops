@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urja Meter Ops Explorer</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <h1>⚡ Urja Meter Ops Explorer</h1>
+      <span class="badge" id="health-badge">Checking API...</span>
+    </div>
+    <div class="header-right">
+      <a href="/docs" target="_blank" class="btn btn-secondary">API Docs (Scalar)</a>
+      <a href="/openapi.json" target="_blank" class="btn btn-secondary">OpenAPI JSON</a>
+      <button id="refresh-btn" class="btn btn-primary">Refresh Upstream</button>
+    </div>
+  </header>
+
+  <div id="data-quality-banner" class="banner hidden">
+    <span class="banner-icon">ℹ️</span>
+    <span id="banner-text">Loading data quality diagnostics...</span>
+    <a href="/data-quality" target="_blank" class="banner-link">View Full Audit Report →</a>
+  </div>
+
+  <section class="stats-bar" id="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">Total Meters</div>
+      <div class="stat-val" id="stat-total">-</div>
+    </div>
+    <div class="stat-card status-installed">
+      <div class="stat-label">Installed</div>
+      <div class="stat-val" id="stat-installed">-</div>
+    </div>
+    <div class="stat-card status-faulty">
+      <div class="stat-label">Faulty</div>
+      <div class="stat-val" id="stat-faulty">-</div>
+    </div>
+    <div class="stat-card status-decom">
+      <div class="stat-label">Decommissioned</div>
+      <div class="stat-val" id="stat-decom">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Transformers (DTs)</div>
+      <div class="stat-val" id="stat-transformers">-</div>
+    </div>
+  </section>
+
+  <main class="app-layout">
+    <!-- Sidebar: Hierarchy & Filters -->
+    <aside class="sidebar">
+      <div class="filter-box">
+        <h3>Search & Filters</h3>
+        <input type="text" id="search-input" placeholder="Search meter ID / serial..." />
+        
+        <div class="filter-row">
+          <label for="filter-status">Status:</label>
+          <select id="filter-status">
+            <option value="">All Statuses</option>
+            <option value="Installed">Installed</option>
+            <option value="Faulty">Faulty</option>
+            <option value="Decommissioned">Decommissioned</option>
+          </select>
+        </div>
+
+        <div class="filter-row">
+          <label for="filter-make">Make:</label>
+          <select id="filter-make">
+            <option value="">All Makes</option>
+            <option value="HPL">HPL</option>
+            <option value="L&T">L&T</option>
+            <option value="Genus">Genus</option>
+            <option value="Allied">Allied</option>
+            <option value="Secure">Secure</option>
+          </select>
+        </div>
+
+        <div class="active-node-banner hidden" id="active-node-box">
+          <span>Filtering by node: <strong id="active-node-name"></strong></span>
+          <button id="clear-node-btn" title="Clear node filter">✕</button>
+        </div>
+      </div>
+
+      <div class="hierarchy-tree-box">
+        <h3>Network Hierarchy</h3>
+        <div id="tree-container" class="tree-container">Loading tree...</div>
+      </div>
+    </aside>
+
+    <!-- Map View -->
+    <section class="map-container">
+      <div id="map"></div>
+      <div class="map-legend">
+        <span><i class="dot dot-installed"></i> Installed</span>
+        <span><i class="dot dot-faulty"></i> Faulty</span>
+        <span><i class="dot dot-decom"></i> Decommissioned</span>
+      </div>
+    </section>
+
+    <!-- Meter Detail & Consumption Chart Panel -->
+    <aside class="meter-panel hidden" id="meter-panel">
+      <div class="panel-header">
+        <h2 id="panel-meter-id">Meter Details</h2>
+        <button id="close-panel-btn">✕</button>
+      </div>
+
+      <div class="panel-body">
+        <div class="info-group">
+          <div class="info-row"><span>Serial:</span> <strong id="info-serial">-</strong></div>
+          <div class="info-row"><span>Make & Phase:</span> <strong id="info-make-phase">-</strong></div>
+          <div class="info-row"><span>Status:</span> <strong id="info-status">-</strong></div>
+          <div class="info-row"><span>Type / Build:</span> <strong id="info-type-build">-</strong></div>
+          <div class="info-row"><span>Transformer:</span> <strong id="info-dt">-</strong></div>
+        </div>
+
+        <div class="info-group">
+          <h4>Hierarchy Path</h4>
+          <div class="breadcrumb" id="info-breadcrumb">-</div>
+        </div>
+
+        <div class="info-group" id="issues-group">
+          <h4>Data Quality Notes</h4>
+          <div id="info-issues" class="issues-list">None</div>
+        </div>
+
+        <div class="info-group">
+          <h4>7-Day Interval Consumption</h4>
+          <p class="chart-subtitle">30-min intervals (active kWh and Voltage). Historical window ends 30 Jun 2026.</p>
+          <div id="chart-loading" class="chart-loading hidden">Fetching readings...</div>
+          <div id="chart-container" class="chart-container"></div>
+          <div id="chart-summary" class="chart-summary"></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

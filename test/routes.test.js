@@ -206,6 +206,13 @@ describe('HTTP Routes via app.inject()', () => {
     assert.equal(body.data.meterCount, 8);
   });
 
+  it('GET / serves the static web client index.html', async () => {
+    const res = await app.inject({ method: 'GET', url: '/' });
+    assert.equal(res.statusCode, 200);
+    assert.ok(res.headers['content-type'].includes('text/html'));
+    assert.ok(res.body.includes('Urja Meter Ops Explorer'));
+  });
+
   it('returns 400 invalid_request on bad query parameters', async () => {
     const res = await app.inject({ method: 'GET', url: '/meters?near=invalid_coords' });
     assert.equal(res.statusCode, 400);
