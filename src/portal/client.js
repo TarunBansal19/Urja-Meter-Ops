@@ -110,6 +110,12 @@ export class PortalClient {
     }
 
     const doLogin = async () => {
+      if (!this.email || !this.password) {
+        throw new PortalAuthError(
+          'Missing portal credentials. Please set PORTAL_EMAIL and PORTAL_PASSWORD in your environment variables.'
+        );
+      }
+
       const url = `${this.baseUrl}/login`;
       const body = new URLSearchParams({
         email: this.email,
