@@ -1,5 +1,7 @@
 # Urja Meter Ops — Upstream Protocol Specification
 
+**Author:** Tarun Bansal (`bansaltarun0819@gmail.com`)
+
 > **Status Tags:** **[C]** Confirmed via live probes and code verification; **[L]** Highly likely based on structural patterns; **[?]** Unverified / open behavior.
 
 This document describes the reverse-engineered wire protocol, authentication model, quirks, and data schema of the legacy Urja Meter Ops web portal (`https://urja-ops.flockenergy.tech`). For complete chronological investigation notes, see [docs/investigation-log.md](docs/investigation-log.md).

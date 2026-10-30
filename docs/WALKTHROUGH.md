@@ -1,6 +1,8 @@
 # Technical Walkthrough & Discussion Guide
 
-This guide is designed for the assignment follow-up review. It outlines the architecture, key design decisions, dataset quirks, and code locations.
+**Author:** Tarun Bansal (`bansaltarun0819@gmail.com`)
+
+This guide is designed for the assignment follow-up review. It outlines my architecture, key design decisions, dataset quirks, and code locations.
 
 ---
 

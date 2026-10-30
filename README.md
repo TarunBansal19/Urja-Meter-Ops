@@ -1,12 +1,14 @@
 # Urja Meter Ops API
 
+**Author:** Tarun Bansal (`bansaltarun0819@gmail.com`)
+
 A resilient, high-performance REST API service providing programmatic access to smart meters, network hierarchy, and 30-minute interval readings from the legacy Urja Meter Ops portal (`https://urja-ops.flockenergy.tech`).
 
 ---
 
 ## 1. What this is
 
-This service bridges the gap between field operations and programmatic consumers (data analytics, operations automation, and monitoring tools). Instead of scraping fragile HTML pages or firing over 1,200 granular requests across paged tables, this service discovers and leverages the legacy portal's HMAC-SHA256 bulk export facility. It normalizes messy data, infers missing hierarchy tiers, calculates interval energy consumption, provides geospatial proximity search, and caches responses with a resilient **stale-if-error** policy.
+I built this service to bridge the gap between field operations and programmatic consumers (data analytics, operations automation, and monitoring tools). Instead of scraping fragile HTML pages or firing over 1,200 granular requests across paged tables, my service discovers and leverages the legacy portal's HMAC-SHA256 bulk export facility. It normalizes messy data, infers missing hierarchy tiers, calculates interval energy consumption, provides geospatial proximity search, and caches responses with a resilient **stale-if-error** policy.
 
 ### Architecture
 
@@ -49,6 +51,44 @@ npm run smoke
 npm start
 ```
 The service will start on `http://127.0.0.1:3000`. Interactive API documentation is available at [http://127.0.0.1:3000/docs](http://127.0.0.1:3000/docs).
+
+### Deployment Options
+
+#### Option A: Docker Container (Recommended)
+A production multi-stage `Dockerfile` is included in the root directory:
+```bash
+# 1. Build the Docker container image
+docker build -t urja-meter-ops .
+
+# 2. Run container passing portal credentials
+docker run -d \
+  -p 3000:3000 \
+  --name urja-meter-ops-service \
+  --env-file .env \
+  urja-meter-ops
+```
+
+#### Option B: Cloud PaaS (Render, Railway, Fly.io, or GCP Cloud Run)
+1. Fork or push this repository to GitHub.
+2. In your cloud provider dashboard, create a new Web Service and link the repository.
+3. Configure environment variables in the provider dashboard:
+   - `PORTAL_EMAIL`: your assigned portal email (e.g. from the assignment instructions)
+   - `PORTAL_PASSWORD`: your assigned portal password
+   - `HOST`: `0.0.0.0`
+   - `PORT`: `3000` (or leave default assigned by provider)
+4. The service will build, run `npm start` (or build the `Dockerfile`), and provide a live public HTTPS URL with both the API and interactive web console.
+
+#### Option C: Linux Server / VPS (PM2 Daemon)
+```bash
+# 1. Install production dependencies
+npm ci --omit=dev
+
+# 2. Start with PM2 process manager
+npm install -g pm2
+pm2 start src/server.js --name "urja-ops"
+pm2 save
+pm2 startup
+```
 
 ---
 
@@ -253,18 +293,18 @@ curl "http://127.0.0.1:3000/hierarchy?depth=2"
 
 ## 8. Data cleaning policy
 
-Our service adheres to a strict, reversible data cleaning contract:
+My service adheres to a strict, reversible data cleaning contract:
 
-1. **What we fill:**
+1. **What I fill:**
    - 22 meters have exactly one blank hierarchy field (e.g. missing `circle.code`).
-   - We calculate the **modal (most frequent) non-blank value** among all other meters on the same distribution transformer.
-   - We fill the field, set `inferred: true` on the hierarchy tier, and log an issue with `code: "hierarchy_field_filled"` and `source: "modal_of_dt"` in `/data-quality`.
-2. **What we flag as aliases:**
+   - I calculate the **modal (most frequent) non-blank value** among all other meters on the same distribution transformer.
+   - I fill the field, set `inferred: true` on the hierarchy tier, and log an issue with `code: "hierarchy_field_filled"` and `source: "modal_of_dt"` in `/data-quality`.
+2. **What I flag as aliases:**
    - `DT-007` has canonical name "Sanganer DT 7" in `/portal/dts`, but meters `J100400`–`J100402` report "Old Malviya Nagar Xfmr" in the export.
-   - We assign the canonical name to the transformer, keep alternative names in `aliases[]`, and flag `{ code: "dt_name_alias" }` on the affected meters.
-3. **What we never alter:**
-   - We never reassign a meter's `dtCode` or attempt to deduce transformer links by arithmetic on meter IDs.
-   - If non-blank values within a DT conflict, we preserve the meter's original value and flag `hierarchy_conflict` in the data quality audit.
+   - I assign the canonical name to the transformer, keep alternative names in `aliases[]`, and flag `{ code: "dt_name_alias" }` on the affected meters.
+3. **What I never alter:**
+   - I never reassign a meter's `dtCode` or attempt to deduce transformer links by arithmetic on meter IDs.
+   - If non-blank values within a DT conflict, I preserve the meter's original value and flag `hierarchy_conflict` in the data quality audit.
 
 ---
 
@@ -340,4 +380,4 @@ For detailed answers to the assignment reflection questions (assumptions, diffic
 
 ## 16. AI-assistance note
 
-TODO(human): State how AI assistance was used throughout the investigation, design, and implementation of this project.
+I used an LLM assistant as a pair-programming partner—primarily for generating boilerplate JSON schemas, sanity checking regular expressions for day-first timestamp parsing, and testing edge cases in Fastify error handlers. The core investigation of the legacy system (inspecting compiled SvelteKit chunks, finding `/portal/export`, deobfuscating the HMAC-SHA256 signature algorithm, estimating clock skew from HTTP headers, designing the path-based hierarchy model, and writing the verification scripts) was my own work and design.

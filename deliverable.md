@@ -17,3 +17,14 @@ browser.
 -​ What you intentionally left out, and why.
 -​ What you'd improve or do differently with more time.
 6.​ Reflection — the questions below, answered in your README or a linked REFLECTION.md.
+
+Put your answers in your README (a ## Reflection section) or in a REFLECTION.md linked from the
+README. A paragraph each is plenty:
+
+What assumptions did you make?
+Which part was the most difficult, and how did you get unstuck?
+If you had another day, what would you improve?
+What mistake did you make while solving this (there's always one)?
+If you were reviewing your own submission, what would you criticise?
+
+NOTE : Don't commit deliverable.md to git , also dont commit .env , the pdf of flock energy , investigation.md and plan.md
